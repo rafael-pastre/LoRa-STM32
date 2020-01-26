@@ -103,11 +103,11 @@ HAL_StatusTypeDef RFM96_set_frequency(RFM96* sensor, long frequency){
 	
 	sensor->frequency = frequency;
 	
-	status = WRITE_REG(RFM96_REG_FREQ_ERROR_MSB, (uint8_t)(frf >> 16));
+	status = WRITE_REG(RFM96_REG_FRF_MSB, (uint8_t)(frf >> 16));
 	RETURN_ON_ERROR(status);
-	status = WRITE_REG(RFM96_REG_FREQ_ERROR_MID, (uint8_t)(frf >> 8));
+	status = WRITE_REG(RFM96_REG_FRF_MID, (uint8_t)(frf >> 8));
 	RETURN_ON_ERROR(status);
-	status = WRITE_REG(RFM96_REG_FREQ_ERROR_LSB, (uint8_t)(frf));
+	status = WRITE_REG(RFM96_REG_FRF_LSB, (uint8_t)(frf));
 	return status;
 }
 
@@ -461,12 +461,19 @@ HAL_StatusTypeDef RFM96_send_packet(RFM96* sensor, void* packet, uint8_t lenght)
 	}
 	
 	/* Set Tx Mode */
+	//status = WRITE_REG(RFM96_REG_IRQ_FLAGS, 0b00001000);
+	//RETURN_ON_ERROR(status);
 	return RFM96_set_op_mode(sensor, RFM96_LORA_MODE_TX);
 }
 
 // TO-DO
 HAL_StatusTypeDef RFM96_read_packet(RFM96* sensor, void* packet, uint8_t lenght){
 	return HAL_ERROR;
+
+	/* Packet Lenght */
+
+	/* */
+	((uint8_t*)pBuffer)[i++] =
 }
 
 
