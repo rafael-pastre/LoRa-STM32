@@ -1,5 +1,8 @@
-  //TX Config
+  RFM96* rfmTX;
+  RFM96* rfmRX;
   HAL_StatusTypeDef status = HAL_OK;
+
+  //TX Config
   rfmTX = (RFM96*)malloc(sizeof(RFM96));
   status = RFM96_set_pins(rfmTX, hspi2, SS_COMM_TX_GPIO_Port, SS_COMM_TX_Pin, RESET_COMM_TX_GPIO_Port, RESET_COMM_TX_Pin);
   status = RFM96_init(rfmTX, 433.123E6, 0x12);
