@@ -123,6 +123,10 @@ extern "C" {
 #define RFM96_LORA_CR_4_7				0x06
 #define RFM96_LORA_CR_4_8				0x08
 
+/* LoRa Header Modes (section 4.1.1.6) */
+#define RFM96_LORA_EXPLICIT(reg_val)	(reg_val & 0b11111110)
+#define RFM96_LORA_IMPLICIT(reg_val)	(reg_val | 0b00000001)
+
 /* Macros */
 #define RFM96_IGNORE_RESET_PIN			0xFFFF	// Use this in init to ignore reset pin
 #define RFM96_TIMEOUT					100
@@ -154,6 +158,8 @@ HAL_StatusTypeDef RFM96_set_ocp(RFM96* sensor, uint16_t current_mA);
 HAL_StatusTypeDef RFM96_disable_ocp(RFM96* sensor);
 HAL_StatusTypeDef RFM96_enable_crc(RFM96* sensor);
 HAL_StatusTypeDef RFM96_disable_crc(RFM96* sensor);
+HAL_StatusTypeDef RFM96_explicit_header_mode(RFM96* sensor);
+HAL_StatusTypeDef RFM96_implicit_header_mode(RFM96* sensor);
 // enable/disable invert_iq
 HAL_StatusTypeDef RFM96_set_ldo_flag(RFM96* sensor);
 
@@ -168,8 +174,8 @@ HAL_StatusTypeDef RFM96_raw_sbw_to_long(uint8_t raw_sbw, long* sbw);
 HAL_StatusTypeDef RFM96_random(RFM96* sensor, uint8_t* random);
 
 /* Packet Transmission */
-HAL_StatusTypeDef RFM96_send_packet(RFM96* sensor, void* packet, uint8_t lenght);
-HAL_StatusTypeDef RFM96_read_packet(RFM96* sensor, void* packet, uint8_t lenght);
+HAL_StatusTypeDef RFM96_send_packet(RFM96* sensor, void* packet, uint8_t length);
+HAL_StatusTypeDef RFM96_read_packet(RFM96* sensor, void* packet, uint8_t length);
 // handle_dio0
 // on_receive
 // available

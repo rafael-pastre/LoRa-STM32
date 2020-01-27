@@ -292,6 +292,29 @@ HAL_StatusTypeDef RFM96_disable_crc(RFM96* sensor){
 	return status;
 }
 
+
+HAL_StatusTypeDef RFM96_explicit_header_mode(RFM96* sensor){
+	HAL_StatusTypeDef status = HAL_OK;
+	uint8_t reg_value = 0;
+
+	status = READ_REG(RFM96_REG_MODEM_CONFIG_1, &reg_value);
+	RETURN_ON_ERROR(status);
+	reg_value = RFM96_LORA_EXPLICIT(reg_value);
+	status = WRITE_REG(RFM96_REG_MODEM_CONFIG_1, reg_value);
+	return status;
+}
+
+HAL_StatusTypeDef RFM96_implicit_header_mode(RFM96* sensor){
+	HAL_StatusTypeDef status = HAL_OK;
+	uint8_t reg_value = 0;
+
+	status = READ_REG(RFM96_REG_MODEM_CONFIG_1, &reg_value);
+	RETURN_ON_ERROR(status);
+	reg_value = RFM96_LORA_IMPLICIT(reg_value);
+	status = WRITE_REG(RFM96_REG_MODEM_CONFIG_1, reg_value);
+	return status;
+}
+
 // DONE - Need to test
 HAL_StatusTypeDef RFM96_set_ldo_flag(RFM96* sensor){
 	HAL_StatusTypeDef status = HAL_OK;
@@ -426,7 +449,7 @@ HAL_StatusTypeDef RFM96_random(RFM96* sensor, uint8_t* random){
 		Packet Transmission
 *********************************/
 // DONE - Need to test. Depending on SPI burst read/write
-HAL_StatusTypeDef RFM96_send_packet(RFM96* sensor, void* packet, uint8_t lenght){
+HAL_StatusTypeDef RFM96_send_packet(RFM96* sensor, void* packet, uint8_t length){
 	HAL_StatusTypeDef status = HAL_OK;
 	uint8_t reg_op_val = 0;
 	uint8_t fifo_addr_ptr = 0;
@@ -449,13 +472,13 @@ HAL_StatusTypeDef RFM96_send_packet(RFM96* sensor, void* packet, uint8_t lenght)
 	status = WRITE_REG(RFM96_REG_FIFO_ADDR_PTR, fifo_addr_ptr);
 	RETURN_ON_ERROR(status);
 	
-	status = WRITE_REG(RFM96_REG_PAYLOAD_LENGTH, lenght);
+	status = WRITE_REG(RFM96_REG_PAYLOAD_LENGTH, length);
 	RETURN_ON_ERROR(status);
-	status = WRITE_REG(RFM96_REG_FIFO, lenght);
+	status = WRITE_REG(RFM96_REG_FIFO, length);
 	RETURN_ON_ERROR(status);
 	
 	/* Write Data FIFO */
-	for(int i = 0; i < lenght; i++){
+	for(int i = 0; i < length; i++){
 		status = WRITE_REG(RFM96_REG_FIFO, (((uint8_t*)packet)[i]));
 		RETURN_ON_ERROR(status);
 	}
@@ -467,13 +490,55 @@ HAL_StatusTypeDef RFM96_send_packet(RFM96* sensor, void* packet, uint8_t lenght)
 }
 
 // TO-DO
-HAL_StatusTypeDef RFM96_read_packet(RFM96* sensor, void* packet, uint8_t lenght){
-	return HAL_ERROR;
+HAL_StatusTypeDef RFM96_read_packet(RFM96* sensor, void* packet, uint8_t length){
+	HAL_StatusTypeDef status = HAL_OK;
+	uint8_t reg_op_val, iqr_val, fifo_addr_ptr;
+	uint8_t i;
 
-	/* Packet Lenght */
+	/* Verifies if is not transmiting */
+	status = READ_REG(RFM96_REG_OP_MODE, &reg_op_val);
+	RETURN_ON_ERROR(status);
+	reg_op_val = RFM96_GET_LORA_MODE(reg_op_val);
+	if(reg_op_val == RFM96_LORA_MODE_FSTX && reg_op_val == RFM96_LORA_MODE_TX ){
+		return HAL_ERROR;
+	}
 
-	/* */
-	((uint8_t*)pBuffer)[i++] =
+	/* Set Standby Mode */
+	//status = RFM96_set_op_mode(sensor, RFM96_LORA_MODE_STANDBY);
+	//RETURN_ON_ERROR(status);
+
+	/* Set Header Mode */
+	//status = RFM96_explicit_header_mode(sensor);
+	//RETURN_ON_ERROR(status);
+
+	/* Verifies Received Packet and Consistency */
+	status = READ_REG(RFM96_REG_IRQ_FLAGS, &iqr_val);
+	RETURN_ON_ERROR(status);
+	if((iqr_val & 0b01100000) != 0b01000000){
+		return HAL_ERROR;
+	}
+	status = WRITE_REG(RFM96_REG_IRQ_FLAGS, iqr_val);
+	RETURN_ON_ERROR(status);
+
+	/* Packet Length */
+	status = READ_REG(RFM96_REG_RX_NB_BYTES, &i);
+	RETURN_ON_ERROR(status);
+	length = (i < length)?(i):(length);
+
+	/* RX Init */
+	status = READ_REG(RFM96_REG_FIFO_RX_CURRENT_ADDR, &fifo_addr_ptr);
+	RETURN_ON_ERROR(status);
+	status = WRITE_REG(RFM96_REG_FIFO_ADDR_PTR, fifo_addr_ptr);
+	RETURN_ON_ERROR(status);
+
+	/* Read Packet Data */
+	for(i = 0; i < length; i++){
+		status = READ_REG(RFM96_REG_FIFO, ((uint8_t*)(packet + i)));
+		RETURN_ON_ERROR(status);
+	}
+
+	status = RFM96_set_op_mode(sensor, RFM96_LORA_MODE_RX_CONT);
+	return status;
 }
 
 
